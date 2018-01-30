@@ -8,11 +8,16 @@ static const unsigned int UINT_MAX = (unsigned int) -1;
 
 static const String FIRMWARE_VERSION = "SourceBots PWM/GPIO v0.0.1";
 
-typedef String CommandError;
+class CommandError {
+public:
+  bool ok;
+  String message;
+  CommandError(bool ok_, String message_) : ok(ok_), message(message_) {}
+};
 
-static const CommandError OK = "";
+static const CommandError OK(true, "");
 
-#define COMMAND_ERROR(x) ((x))
+#define COMMAND_ERROR(x) (CommandError(false, (x)))
 
 static Adafruit_PWMServoDriver SERVOS = Adafruit_PWMServoDriver();
 
@@ -229,10 +234,10 @@ static void serialWrite(int commandId, char lineType, const String& str) {
 
 static void dispatch_command(int commandId, const class CommandHandler& handler, const String& argument) {
   auto err = handler.run(commandId, argument);
-  if (err == OK) {
+  if (err.ok) {
     serialWrite(commandId, '+', "OK");
   } else {
-    serialWrite(commandId, '-', String("Error: ") + err);
+    serialWrite(commandId, '-', String("Error: ") + err.message);
   }
 }
 

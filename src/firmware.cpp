@@ -1,6 +1,8 @@
 #include <limits.h>
-
+#include <Adafruit_Sensor.h>
 #include <Adafruit_PWMServoDriver.h>
+#include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
 
 // Multiplying by this converts round-trip duration in microseconds to distance to object in millimetres.
 static const float ULTRASOUND_COEFFICIENT = 1e-6 * 343.0 * 0.5 * 1e3;
@@ -14,6 +16,7 @@ static const CommandError OK = "";
 #define COMMAND_ERROR(x) ((x))
 
 static Adafruit_PWMServoDriver SERVOS = Adafruit_PWMServoDriver();
+static Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
 void setup() {
   // put your setup code here, to run once:
@@ -24,6 +27,10 @@ void setup() {
 
   Serial.begin(9600);
   Serial.setTimeout(5);
+
+  bno.begin(Adafruit_BNO055::OPERATION_MODE_IMUPLUS); //This will result in orientation being relative to the initial orientation.
+  //Could also use NDOF mode and use the compass so orientation will be absoulte, but calibration of the magnetometer
+  //may be an issue. 
 
   SERVOS.begin();
   SERVOS.setPWMFreq(50);
@@ -202,6 +209,22 @@ static CommandError get_version(int commandId, String argument) {
   return OK;
 }
 
+static CommandError getIMUData(int commandId, String argument) {
+  // implementation here
+  imu::Vector<3> orientation = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  imu::Vector<3> linearAccel = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
+
+  serialWrite(commandId, '>', String(orientation.x()));
+  serialWrite(commandId, '>', String(orientation.y()));
+  serialWrite(commandId, '>', String(orientation.z()));
+
+  serialWrite(commandId, '>', String(linearAccel.x()));
+  serialWrite(commandId, '>', String(linearAccel.y()));
+  serialWrite(commandId, '>', String(linearAccel.z()));
+  
+  return OK;
+}
+
 static const CommandHandler commands[] = {
   CommandHandler("help", &run_help, "show information"),
   CommandHandler("led", &led, "control the debug LED (on/off)"),
@@ -211,6 +234,7 @@ static const CommandHandler commands[] = {
   CommandHandler("gpio-read", &read_pin, "get digital input from GPIO pin"),
   CommandHandler("analogue-read", &analogue_read, "get all analogue inputs"),
   CommandHandler("ultrasound-read", &ultrasound_read, "read an ultrasound sensor <trigger-pin> <echo-pin>"),
+  CommandHandler("getIMUData", &getIMUData, "Reads the data from the IMU sensor. The returned data is the rotation (x,y,z) then the acceleration (x,y,z).")
 };
 
 static void serialWrite(int commandId, char lineType, const String& str) {

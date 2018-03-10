@@ -1,3 +1,9 @@
 [submodule "libraries/Adafruit-PWM-Servo-Driver-Library"]
 	path = libraries/Adafruit-PWM-Servo-Driver-Library
 	url = git://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library
+[submodule "libraries/Adafruit_BNO055"]
+	path = libraries/Adafruit_BNO055
+	url = https://github.com/adafruit/Adafruit_BNO055.git
+[submodule "libraries/Adafruit_Sensor"]
+	path = libraries/Adafruit_Sensor
+	url = https://github.com/adafruit/Adafruit_Sensor.git
